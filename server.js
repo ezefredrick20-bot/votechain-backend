@@ -3,12 +3,18 @@ require("dotenv").config();
 require("./db");
 const Vote = require("./models/Vote");
 const express = require("express");
-const cors = require("cors");
 
 const app = express();
 
+const cors = require("cors");
+
 app.use(cors({
-  origin: "*"
+  origin: [
+    "http://localhost:3000",
+    "https://votechain-frontend-chi.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
 }));
 app.use(express.json());
 
