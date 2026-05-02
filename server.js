@@ -1,4 +1,5 @@
 let isElectionOpen = true;
+require("dotenv").config();
 require("./db");
 const Vote = require("./models/Vote");
 const express = require("express");
@@ -234,10 +235,6 @@ app.get("/reset", async (req, res) => {
 app.delete("/reset-votes", async (req, res) => {
   await Vote.deleteMany({});
   res.json({ message: "All votes cleared ✅" });
-});
-
-app.listen(3001, () => {
-  console.log("Server running on http://localhost:3001");
 });
 
 const PORT = process.env.PORT || 3001;
