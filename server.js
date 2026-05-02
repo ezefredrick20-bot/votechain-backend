@@ -237,11 +237,19 @@ app.get("/reset", async (req, res) => {
   res.send("Database cleared");
 });
 
-// 🧹 RESET ELECTION
-app.delete("/reset-votes", async (req, res) => {
-  await Vote.deleteMany({});
-  res.json({ message: "All votes cleared ✅" });
+app.delete("/delete-user/:nin", async (req, res) => {
+  try {
+    const { nin } = req.params;
+
+    await User.deleteOne({ nin });
+
+    res.json({ message: "User deleted ✅" });
+
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
 });
+
 
 const PORT = process.env.PORT || 3001;
 
