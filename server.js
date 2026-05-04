@@ -219,6 +219,29 @@ app.get("/election-status", (req, res) => {
   });
 });
 
+// 👥 GET ALL REGISTERED USERS (ADMIN)
+app.get("/users", async (req, res) => {
+  try {
+    const users = await User.find();
+
+    // Optional: mask sensitive info
+    const safeUsers = users.map((u) => ({
+      id: u._id,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      phone: u.phone,
+      nin: u.nin.slice(0, 3) + "*****" + u.nin.slice(-3),
+      dob: u.dob,
+    }));
+
+    res.json(safeUsers);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // 📊 Results endpoint
 app.get("/results", async (req, res) => {
   const votes = await Vote.find();
@@ -237,15 +260,17 @@ app.get("/reset", async (req, res) => {
   res.send("Database cleared");
 });
 
-app.delete("/delete-user/:nin", async (req, res) => {
+// 🗑️ DELETE USER
+app.delete("/users/:id", async (req, res) => {
   try {
-    const { nin } = req.params;
+    const { id } = req.params;
 
-    await User.deleteOne({ nin });
+    await User.findByIdAndDelete(id);
 
-    res.json({ message: "User deleted ✅" });
+    res.json({ message: "User deleted successfully ✅" });
 
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Server error" });
   }
 });
