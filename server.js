@@ -159,15 +159,59 @@ app.post("/vote", async (req, res) => {
 });
 
 // 🔐 ADMIN LOGIN
+const jwt = require("jsonwebtoken");
+const verifyAdmin = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(403).json({
+      error: "No token provided",
+    });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
+
+    if (decoded.role !== "admin") {
+      return res.status(403).json({
+        error: "Access denied",
+      });
+    }
+
+    next();
+
+  } catch (error) {
+    return res.status(401).json({
+      error: "Invalid token",
+    });
+  }
+};
+
+// =========================
+// 🔐 ADMIN LOGIN (UPDATED)
+// =========================
 app.post("/admin-login", (req, res) => {
   const { username, password } = req.body;
 
-  // 🔐 CHANGE THESE
-  const ADMIN_USER = "fredrick";
-  const ADMIN_PASS = "votechain123";
+  if (
+    username === process.env.ADMIN_USER &&
+    password === process.env.ADMIN_PASS
+  ) {
+    const token = jwt.sign(
+      { role: "admin" },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
-  if (username === ADMIN_USER && password === ADMIN_PASS) {
-    return res.json({ success: true });
+    return res.json({
+      success: true,
+      token,
+    });
   }
 
   res.status(401).json({ error: "Invalid credentials" });
@@ -178,7 +222,7 @@ app.get("/", (req, res) => {
 });
 
 // 👥 GET ALL VOTERS (ADMIN)
-app.get("/voters", async (req, res) => {
+app.get("/voters", verifyAdmin, async (req, res) => {
   try {
     const votes = await Vote.find();
 
@@ -202,7 +246,7 @@ app.get("/voters", async (req, res) => {
 });
 
 // 🗳️ Toggle election
-app.post("/toggle-election", (req, res) => {
+app.post("/toggle-election", verifyAdmin, (req, res) => {
   isElectionOpen = !isElectionOpen;
 
   res.json({
@@ -220,7 +264,7 @@ app.get("/election-status", (req, res) => {
 });
 
 // 👥 GET ALL REGISTERED USERS (ADMIN)
-app.get("/users", async (req, res) => {
+app.get("/users", verifyAdmin, async (req, res) => {
   try {
     const users = await User.find();
 
@@ -255,13 +299,15 @@ app.get("/results", async (req, res) => {
   res.json(result);
 });
 
-app.get("/reset", async (req, res) => {
+app.delete("/reset-votes", verifyAdmin, async (req, res) => {
   await Vote.deleteMany({});
-  res.send("Database cleared");
+  res.json({
+  message: "Votes cleared successfully",
+});
 });
 
 // 🗑️ DELETE USER
-app.delete("/users/:id", async (req, res) => {
+app.delete("/users/:id", verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
