@@ -140,7 +140,7 @@ app.post("/vote", async (req, res) => {
       });
     }
 
-    if (!global.isElectionOpen) {
+   if (!isElectionOpen) {
   return res.status(403).json({
     error: "Election is closed",
   });
