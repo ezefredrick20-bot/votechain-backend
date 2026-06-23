@@ -266,10 +266,10 @@ app.get("/voters", verifyAdmin, async (req, res) => {
       const maskedNin =
         v.nin.slice(0, 3) + "*****" + v.nin.slice(-3);
 
-      return {
-        nin: maskedNin,
-        candidate: v.candidate,
-      };
+     return {
+ nin:v.nin,
+ candidate:v.candidate
+}
     });
 
     res.json(voters);
