@@ -1,7 +1,8 @@
-let isElectionOpen = true;
 require("dotenv").config();
 require("./db");
 const Vote = require("./models/Vote");
+const ElectionStatus = require("./models/ElectionStatus");
+const Transaction = require("./models/Transaction");
 const express = require("express");
 
 const app = express();
@@ -140,17 +141,51 @@ app.post("/vote", async (req, res) => {
       });
     }
 
-   if (!isElectionOpen) {
-  return res.status(403).json({
-    error: "Election is closed",
-  });
+  const election =
+await ElectionStatus.findOne();
+
+if(!election || !election.isOpen){
+
+return res.status(403).json({
+
+error:"Election is closed"
+
+});
+
 }
 
-    // ✅ Save vote
-    const newVote = new Vote({ candidate, nin });
-    await newVote.save();
+    const newVote = new Vote({
+ candidate,
+ nin
+});
 
-    res.json({ message: "Vote saved ✅" });
+await newVote.save();
+
+// create blockchain-style transaction
+
+const transaction = new Transaction({
+
+ hash:
+ "0x" + Date.now().toString(16),
+
+ candidate,
+
+ nin,
+
+ status:"Confirmed"
+
+});
+
+await transaction.save();
+
+
+res.json({
+
+message:"Vote saved ✅",
+
+transaction
+
+});
 
   } catch (error) {
     console.error(error);
@@ -246,21 +281,76 @@ app.get("/voters", verifyAdmin, async (req, res) => {
 });
 
 // 🗳️ Toggle election
-app.post("/toggle-election", verifyAdmin, (req, res) => {
-  isElectionOpen = !isElectionOpen;
+app.post("/toggle-election", verifyAdmin, async (req,res)=>{
 
-  res.json({
-    status: isElectionOpen,
-    message: isElectionOpen
-      ? "Election is now OPEN"
-      : "Election is now CLOSED",
-  });
+try{
+
+let status = await ElectionStatus.findOne();
+
+if(!status){
+
+status = new ElectionStatus({
+isOpen:true
 });
 
-app.get("/election-status", (req, res) => {
-  res.json({
-    isOpen: isElectionOpen,
-  });
+}
+
+status.isOpen = !status.isOpen;
+
+await status.save();
+
+res.json({
+
+status: status.isOpen,
+
+message: status.isOpen
+? "Election is now OPEN"
+: "Election is now CLOSED"
+
+});
+
+}catch(error){
+
+console.error(error);
+
+res.status(500).json({
+error:"Server error"
+});
+
+}
+
+});
+
+app.get("/election-status", async(req,res)=>{
+
+try{
+
+let status = await ElectionStatus.findOne();
+
+if(!status){
+
+status = await ElectionStatus.create({
+isOpen:true
+});
+
+}
+
+res.json({
+
+isOpen:status.isOpen
+
+});
+
+}catch(error){
+
+console.error(error);
+
+res.status(500).json({
+error:"Server error"
+});
+
+}
+
 });
 
 // 👥 GET ALL REGISTERED USERS (ADMIN)
@@ -284,6 +374,29 @@ app.get("/users", verifyAdmin, async (req, res) => {
     console.error(error);
     res.status(500).json({ error: "Server error" });
   }
+});
+
+app.get("/transactions", async(req,res)=>{
+
+try{
+
+const transactions =
+await Transaction.find().sort({
+timestamp:-1
+});
+
+
+res.json(transactions);
+
+
+}catch(error){
+
+res.status(500).json({
+error:"Server error"
+});
+
+}
+
 });
 
 // 📊 Results endpoint
