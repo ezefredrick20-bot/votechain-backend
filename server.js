@@ -364,7 +364,7 @@ app.get("/users", verifyAdmin, async (req, res) => {
       firstName: u.firstName,
       lastName: u.lastName,
       phone: u.phone,
-      nin: u.nin.slice(0, 3) + "*****" + u.nin.slice(-3),
+      nin:u.nin,
       dob: u.dob,
     }));
 
