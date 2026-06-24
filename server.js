@@ -257,27 +257,32 @@ app.get("/", (req, res) => {
 });
 
 // 👥 GET ALL VOTERS (ADMIN)
-app.get("/voters", verifyAdmin, async (req, res) => {
-  try {
-    const votes = await Vote.find();
+app.get("/voters", verifyAdmin, async (req,res)=>{
 
-    const voters = votes.map((v) => {
-      // 🔐 Mask NIN (first 3 + last 3 visible)
-      const maskedNin =
-        v.nin.slice(0, 3) + "*****" + v.nin.slice(-3);
+try{
 
-     return {
- nin:v.nin,
- candidate:v.candidate
+const votes = await Vote.find();
+
+const voters = votes.map((v)=>({
+
+nin:v.nin,
+
+candidate:v.candidate
+
+}));
+
+res.json(voters);
+
+}catch(error){
+
+console.error(error);
+
+res.status(500).json({
+error:"Server error"
+});
+
 }
-    });
 
-    res.json(voters);
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
-  }
 });
 
 // 🗳️ Toggle election
