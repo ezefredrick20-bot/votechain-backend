@@ -189,6 +189,87 @@ error:"Server error"
 
 });
 
+// REMOVE USER WALLET
+
+app.post("/remove-wallet", async(req,res)=>{
+
+
+try{
+
+
+const {nin}=req.body;
+
+
+
+if(!nin){
+
+return res.status(400).json({
+
+error:"NIN required"
+
+});
+
+}
+
+
+
+
+const user =
+await User.findOne({nin});
+
+
+
+if(!user){
+
+return res.status(404).json({
+
+error:"User not found"
+
+});
+
+}
+
+
+
+
+user.wallet = null;
+
+
+
+await user.save();
+
+
+
+res.json({
+
+message:
+"Wallet disconnected successfully"
+
+});
+
+
+
+}
+
+
+catch(error){
+
+
+console.error(error);
+
+
+res.status(500).json({
+
+error:"Server error"
+
+});
+
+
+}
+
+
+});
+
 // 🗳️ VOTE ENDPOINT
 
 app.post("/vote", async(req,res)=>{
