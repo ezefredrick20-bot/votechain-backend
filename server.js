@@ -104,7 +104,9 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// SAVE CONNECTED WALLET
+// SAVE WALLET
+
+// SAVE WALLET
 
 app.post("/save-wallet", async(req,res)=>{
 
@@ -131,9 +133,20 @@ error:"NIN and wallet required"
 
 
 
-
 const user =
-await User.findOne({nin});
+await User.findOneAndUpdate(
+
+{nin},
+
+{
+wallet:wallet.toLowerCase()
+},
+
+{
+new:true
+}
+
+);
 
 
 
@@ -149,15 +162,6 @@ error:"User not found"
 
 
 
-
-user.wallet = wallet;
-
-
-
-await user.save();
-
-
-
 res.json({
 
 message:"Wallet saved successfully",
@@ -167,11 +171,10 @@ wallet:user.wallet
 });
 
 
-
 }
 
-catch(error){
 
+catch(error){
 
 console.error(error);
 
@@ -186,12 +189,11 @@ error:"Server error"
 }
 
 
-
 });
 
-// REMOVE USER WALLET
+// DISCONNECT WALLET
 
-app.post("/remove-wallet", async(req,res)=>{
+app.post("/disconnect-wallet", async(req,res)=>{
 
 
 try{
@@ -213,7 +215,6 @@ error:"NIN required"
 
 
 
-
 const user =
 await User.findOne({nin});
 
@@ -231,9 +232,7 @@ error:"User not found"
 
 
 
-
 user.wallet = null;
-
 
 
 await user.save();
@@ -242,15 +241,13 @@ await user.save();
 
 res.json({
 
-message:
-"Wallet disconnected successfully"
+message:"Wallet disconnected successfully"
 
 });
 
 
 
 }
-
 
 catch(error){
 
@@ -761,45 +758,6 @@ error:"Server error"
 
 });
 
-app.get("/user/:nin", async(req,res)=>{
-
-
-try{
-
-
-const user =
-await User.findOne({
-
-nin:req.params.nin
-
-});
-
-
-
-res.json({
-
-wallet:user?.wallet || null
-
-});
-
-
-}
-
-
-catch(error){
-
-
-res.status(500).json({
-
-error:"Server error"
-
-});
-
-
-}
-
-
-});
 
 // 👥 GET ALL REGISTERED USERS (ADMIN)
 app.get("/users", verifyAdmin, async (req, res) => {
@@ -865,14 +823,14 @@ app.get("/results", async (req, res) => {
   res.json(result);
 });
 
-app.get("/user/:nin", async(req,res)=>{
+// GET USER WALLET
 
+app.get("/user/:nin", async(req,res)=>{
 
 try{
 
 
-const user =
-await User.findOne({
+const user = await User.findOne({
 
 nin:req.params.nin
 
@@ -894,16 +852,18 @@ error:"User not found"
 
 res.json({
 
-wallet:user.wallet
+wallet:user.wallet || null
 
 });
-
 
 
 }
 
 
 catch(error){
+
+
+console.error(error);
 
 
 res.status(500).json({

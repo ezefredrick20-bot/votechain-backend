@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
 
-
 nin:{
 type:String,
 unique:true,
@@ -39,16 +38,17 @@ required:true
 },
 
 
-hasVoted:{
-type:Boolean,
-default:false
-},
-
-
-// 🔥 ADD THIS
+// wallet connection
 wallet:{
 type:String,
 default:null
+},
+
+
+// vote control
+hasVoted:{
+type:Boolean,
+default:false
 }
 
 
