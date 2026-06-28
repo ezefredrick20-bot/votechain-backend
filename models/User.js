@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
 
+
 nin:{
 type:String,
 unique:true,
@@ -38,22 +39,18 @@ required:true
 },
 
 
-wallet:{
-
-type:String,
-
-default:null
-
+hasVoted:{
+type:Boolean,
+default:false
 },
 
 
-hasVoted:{
-
-type:Boolean,
-
-default:false
-
+// 🔥 ADD THIS
+wallet:{
+type:String,
+default:null
 }
+
 
 });
 

@@ -761,6 +761,46 @@ error:"Server error"
 
 });
 
+app.get("/user/:nin", async(req,res)=>{
+
+
+try{
+
+
+const user =
+await User.findOne({
+
+nin:req.params.nin
+
+});
+
+
+
+res.json({
+
+wallet:user?.wallet || null
+
+});
+
+
+}
+
+
+catch(error){
+
+
+res.status(500).json({
+
+error:"Server error"
+
+});
+
+
+}
+
+
+});
+
 // 👥 GET ALL REGISTERED USERS (ADMIN)
 app.get("/users", verifyAdmin, async (req, res) => {
   try {
