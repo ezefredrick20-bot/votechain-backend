@@ -1,9 +1,7 @@
 const mongoose = require("mongoose");
 
 
-
 const userSchema = new mongoose.Schema({
-
 
 
 nin:{
@@ -72,6 +70,20 @@ required:true
 
 },
 
+
+
+
+// wallet connected to this user
+
+wallet:{
+
+
+type:String,
+
+default:null
+
+
+},
 
 
 

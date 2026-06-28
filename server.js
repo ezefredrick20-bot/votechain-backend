@@ -104,69 +104,240 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// 🗳️ Vote endpoint
-app.post("/vote", async(req,res)=>{
+// SAVE CONNECTED WALLET
+
+app.post("/save-wallet", async(req,res)=>{
+
 
 try{
 
 
 const {
-candidate,
 nin,
-wallet,
-signature
+wallet
 }=req.body;
 
+
+
+if(!nin || !wallet){
+
+return res.status(400).json({
+
+error:"NIN and wallet required"
+
+});
+
+}
+
+
+
+
+const user =
+await User.findOne({nin});
+
+
+
+if(!user){
+
+return res.status(404).json({
+
+error:"User not found"
+
+});
+
+}
+
+
+
+
+user.wallet = wallet;
+
+
+
+await user.save();
+
+
+
+res.json({
+
+message:"Wallet saved successfully",
+
+wallet:user.wallet
+
+});
+
+
+
+}
+
+catch(error){
+
+
+console.error(error);
+
+
+res.status(500).json({
+
+error:"Server error"
+
+});
+
+
+}
+
+
+
+});
+
+// 🗳️ VOTE ENDPOINT
+
+app.post("/vote", async(req,res)=>{
+
+
+try{
+
+
+const {
+
+candidate,
+
+nin,
+
+wallet,
+
+signature
+
+
+}=req.body;
+
+
+
+
+
+// =====================
+// VALIDATION
+// =====================
 
 
 if(
 !candidate ||
 !nin ||
 !wallet
+
 ){
+
 
 return res.status(400).json({
 
-error:"Candidate, NIN and wallet required"
+error:
+"Candidate, NIN and wallet required"
 
 });
+
 
 }
 
 
 
-// check user
+
+
+
+// =====================
+// FIND USER
+// =====================
+
 
 const user =
 await User.findOne({nin});
 
 
+
 if(!user){
+
 
 return res.status(400).json({
 
-error:"User not registered"
+error:
+"User not registered"
 
 });
+
 
 }
 
 
 
 
-// prevent double voting
+
+// =====================
+// CHECK WALLET MATCH
+// =====================
+
+
+if(!user.wallet){
+
+
+return res.status(400).json({
+
+error:
+"Please connect wallet first"
+
+});
+
+
+}
+
+
+
+
+if(
+user.wallet.toLowerCase()
+!==
+wallet.toLowerCase()
+
+){
+
+
+return res.status(400).json({
+
+error:
+"Connected wallet does not match registered wallet"
+
+});
+
+
+}
+
+
+
+
+
+// =====================
+// CHECK DOUBLE VOTE
+// =====================
+
 
 const alreadyVoted =
-await Vote.findOne({nin});
+
+await Vote.findOne({
+
+nin
+
+});
+
+
 
 
 if(alreadyVoted){
 
+
 return res.status(400).json({
 
-error:"You have already voted"
+error:
+"You have already voted"
 
 });
+
 
 }
 
@@ -174,20 +345,34 @@ error:"You have already voted"
 
 
 
-// election status
+
+// =====================
+// CHECK ELECTION STATUS
+// =====================
+
 
 const election =
+
 await ElectionStatus.findOne();
 
 
 
-if(!election || !election.isOpen){
+
+
+if(
+!election ||
+!election.isOpen
+
+){
+
 
 return res.status(403).json({
 
-error:"Election closed"
+error:
+"Election closed"
 
 });
+
 
 }
 
@@ -195,9 +380,15 @@ error:"Election closed"
 
 
 
-// save vote
+
+
+// =====================
+// SAVE VOTE
+// =====================
+
 
 const vote =
+
 await Vote.create({
 
 candidate,
@@ -214,10 +405,33 @@ wallet
 
 
 
-// create blockchain transaction record
+
+// =====================
+// UPDATE USER
+// =====================
+
+
+user.hasVoted = true;
+
+
+await user.save();
+
+
+
+
+
+
+
+
+
+// =====================
+// CREATE TRANSACTION
+// =====================
+
 
 
 const transaction =
+
 await Transaction.create({
 
 nin,
@@ -226,29 +440,51 @@ wallet,
 
 candidate,
 
+
 signature,
 
+
 hash:
-"0x"+
-Date.now().toString(16),
+
+"0x" +
+
+Date.now()
+
+.toString(16),
 
 
-status:"Confirmed"
+
+status:
+"Confirmed"
+
 
 
 });
 
 
 
+
+
+
+
+// =====================
+// RESPONSE
+// =====================
 
 
 res.json({
 
-message:"Vote successful",
+message:
+"Vote successful ✅",
+
 
 transaction
 
+
 });
+
+
+
 
 
 
@@ -256,17 +492,26 @@ transaction
 
 catch(error){
 
-console.error(error);
+
+console.error(
+"Vote Error:",
+error
+);
+
 
 
 res.status(500).json({
 
-error:"Server error"
+error:
+"Server error"
 
 });
 
 
+
 }
+
+
 
 });
 
@@ -499,37 +744,39 @@ app.get("/results", async (req, res) => {
   res.json(result);
 });
 
-app.delete(
-"/reset-votes",
-verifyAdmin,
-async(req,res)=>{
+app.get("/user/:nin", async(req,res)=>{
 
 
 try{
 
 
-await Vote.deleteMany({});
+const user =
+await User.findOne({
+
+nin:req.params.nin
+
+});
 
 
-await Transaction.deleteMany({});
 
+if(!user){
 
+return res.status(404).json({
 
-await User.updateMany(
-{},
-{
-hasVoted:false
+error:"User not found"
+
+});
+
 }
-);
 
 
 
 res.json({
 
-message:
-"Election reset successfully"
+wallet:user.wallet
 
 });
+
 
 
 }
@@ -540,12 +787,83 @@ catch(error){
 
 res.status(500).json({
 
-error:"Reset failed"
+error:"Server error"
 
 });
 
 
 }
+
+
+});
+
+// 🧹 RESET ELECTION
+
+app.delete(
+"/reset-votes",
+verifyAdmin,
+async(req,res)=>{
+
+
+try{
+
+
+// delete votes
+
+await Vote.deleteMany({});
+
+
+
+// delete blockchain transactions
+
+await Transaction.deleteMany({});
+
+
+
+
+// allow users vote again
+
+await User.updateMany(
+{},
+{
+hasVoted:false
+}
+);
+
+
+
+
+res.json({
+
+message:
+"Election reset successfully ✅"
+
+});
+
+
+
+}
+
+catch(error){
+
+
+console.error(
+"Reset error:",
+error
+);
+
+
+
+res.status(500).json({
+
+error:
+"Reset failed"
+
+});
+
+
+}
+
 
 
 });

@@ -1,12 +1,65 @@
 const mongoose = require("mongoose");
 
+
 const voteSchema = new mongoose.Schema({
-  candidate: String,
-  nin: {
-    type: String,
-    required: true,
-    unique: true, // 🔥 VERY IMPORTANT
-  },
+
+
+candidate:{
+
+
+type:String,
+
+required:true
+
+
+},
+
+
+
+nin:{
+
+
+type:String,
+
+required:true,
+
+unique:true
+
+
+},
+
+
+
+wallet:{
+
+
+type:String,
+
+required:true
+
+
+},
+
+
+
+timestamp:{
+
+
+type:Date,
+
+default:Date.now
+
+
+}
+
+
+
 });
 
-module.exports = mongoose.model("Vote", voteSchema);
+
+
+module.exports =
+mongoose.model(
+"Vote",
+voteSchema
+);
