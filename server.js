@@ -119,8 +119,6 @@ signature
 
 
 
-// check required data
-
 if(
 !candidate ||
 !nin ||
@@ -137,8 +135,7 @@ error:"Candidate, NIN and wallet required"
 
 
 
-
-// check registered user
+// check user
 
 const user =
 await User.findOne({nin});
@@ -157,13 +154,13 @@ error:"User not registered"
 
 
 
-// one user one vote
+// prevent double voting
 
-const existingVote =
+const alreadyVoted =
 await Vote.findOne({nin});
 
 
-if(existingVote){
+if(alreadyVoted){
 
 return res.status(400).json({
 
@@ -176,16 +173,15 @@ error:"You have already voted"
 
 
 
-// check election status
+
+// election status
 
 const election =
 await ElectionStatus.findOne();
 
 
-if(
-!election ||
-!election.isOpen
-){
+
+if(!election || !election.isOpen){
 
 return res.status(403).json({
 
@@ -198,52 +194,44 @@ error:"Election closed"
 
 
 
+
 // save vote
 
-const newVote =
-new Vote({
+const vote =
+await Vote.create({
 
 candidate,
 
-nin
+nin,
+
+wallet
 
 });
 
 
-await newVote.save();
 
 
 
 
 
+// create blockchain transaction record
 
-// generate transaction hash
-
-const hash =
-"0x" +
-Math.random()
-.toString(16)
-.substring(2,12);
-
-
-
-
-
-
-// save transaction
 
 const transaction =
-new Transaction({
+await Transaction.create({
 
 nin,
 
-candidate,
-
 wallet,
 
-hash,
+candidate,
 
 signature,
+
+hash:
+"0x"+
+Date.now().toString(16),
+
 
 status:"Confirmed"
 
@@ -252,22 +240,15 @@ status:"Confirmed"
 
 
 
-await transaction.save();
-
-
-
 
 
 res.json({
 
-message:
-"Vote submitted successfully",
+message:"Vote successful",
 
 transaction
 
-
 });
-
 
 
 
@@ -275,7 +256,7 @@ transaction
 
 catch(error){
 
-console.log(error);
+console.error(error);
 
 
 res.status(500).json({
@@ -286,7 +267,6 @@ error:"Server error"
 
 
 }
-
 
 });
 
@@ -485,6 +465,9 @@ try{
 const transactions =
 await Transaction.find({
 nin:req.params.nin
+})
+.sort({
+timestamp:-1
 });
 
 

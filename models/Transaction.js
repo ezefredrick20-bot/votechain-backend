@@ -22,10 +22,8 @@ required:true
 
 
 hash:{
-type:String,
-required:true
+type:String
 },
-
 
 signature:{
 type:String
