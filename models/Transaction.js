@@ -3,40 +3,52 @@ const mongoose = require("mongoose");
 
 const transactionSchema = new mongoose.Schema({
 
-  hash:{
-    type:String,
-    required:true
-  },
+nin:{
+type:String,
+required:true
+},
 
 
-  candidate:{
-    type:String,
-    required:true
-  },
+wallet:{
+type:String,
+required:true
+},
 
 
-  nin:{
-    type:String,
-    required:true
-  },
+candidate:{
+type:String,
+required:true
+},
 
 
-  status:{
-    type:String,
-    default:"Confirmed"
-  },
+hash:{
+type:String,
+required:true
+},
 
 
-  timestamp:{
-    type:Date,
-    default:Date.now
-  }
+signature:{
+type:String
+},
+
+
+status:{
+type:String,
+default:"Confirmed"
+},
+
+
+timestamp:{
+type:Date,
+default:Date.now
+}
 
 
 });
 
 
-module.exports = mongoose.model(
+module.exports =
+mongoose.model(
 "Transaction",
 transactionSchema
 );

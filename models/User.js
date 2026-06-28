@@ -1,12 +1,101 @@
 const mongoose = require("mongoose");
 
+
+
 const userSchema = new mongoose.Schema({
-  nin: { type: String, unique: true },
-  phone: { type: String, unique: true },
-  firstName: String,
-  lastName: String,
-  middleName: String,
-  dob: String,
+
+
+
+nin:{
+
+
+type:String,
+
+unique:true,
+
+required:true
+
+
+},
+
+
+
+phone:{
+
+
+type:String,
+
+unique:true,
+
+required:true
+
+
+},
+
+
+
+firstName:{
+
+
+type:String,
+
+required:true
+
+
+},
+
+
+
+lastName:{
+
+
+type:String,
+
+required:true
+
+
+},
+
+
+
+middleName:String,
+
+
+
+dob:{
+
+
+type:String,
+
+required:true
+
+
+},
+
+
+
+
+// used for one person one vote
+
+hasVoted:{
+
+
+type:Boolean,
+
+
+default:false
+
+
+}
+
+
+
 });
 
-module.exports = mongoose.model("User", userSchema);
+
+
+module.exports =
+mongoose.model(
+"User",
+userSchema
+);

@@ -105,92 +105,189 @@ app.post("/login", async (req, res) => {
 });
 
 // 🗳️ Vote endpoint
-app.post("/vote", async (req, res) => {
-  try {
-    const { candidate, nin } = req.body;
+app.post("/vote", async(req,res)=>{
 
-    // ✅ Check input
-    if (!candidate || !nin) {
-      return res.status(400).json({
-        error: "Candidate and NIN required",
-      });
-    }
+try{
 
-    // ✅ Validate NIN
-    if (!/^\d{11}$/.test(nin)) {
-      return res.status(400).json({
-        error: "Invalid NIN format",
-      });
-    }
 
-    // ✅ CHECK IF USER EXISTS (NEW 🔥)
-    const user = await User.findOne({ nin });
+const {
+candidate,
+nin,
+wallet,
+signature
+}=req.body;
 
-    if (!user) {
-      return res.status(400).json({
-        error: "You must register before voting",
-      });
-    }
 
-    // ✅ Prevent duplicate vote
-    const existingVote = await Vote.findOne({ nin });
 
-    if (existingVote) {
-      return res.status(400).json({
-        error: "You have already voted",
-      });
-    }
+// check required data
 
-  const election =
-await ElectionStatus.findOne();
+if(
+!candidate ||
+!nin ||
+!wallet
+){
 
-if(!election || !election.isOpen){
+return res.status(400).json({
 
-return res.status(403).json({
-
-error:"Election is closed"
+error:"Candidate, NIN and wallet required"
 
 });
 
 }
 
-    const newVote = new Vote({
- candidate,
- nin
+
+
+
+// check registered user
+
+const user =
+await User.findOne({nin});
+
+
+if(!user){
+
+return res.status(400).json({
+
+error:"User not registered"
+
 });
+
+}
+
+
+
+
+// one user one vote
+
+const existingVote =
+await Vote.findOne({nin});
+
+
+if(existingVote){
+
+return res.status(400).json({
+
+error:"You have already voted"
+
+});
+
+}
+
+
+
+
+// check election status
+
+const election =
+await ElectionStatus.findOne();
+
+
+if(
+!election ||
+!election.isOpen
+){
+
+return res.status(403).json({
+
+error:"Election closed"
+
+});
+
+}
+
+
+
+
+// save vote
+
+const newVote =
+new Vote({
+
+candidate,
+
+nin
+
+});
+
 
 await newVote.save();
 
-// create blockchain-style transaction
 
-const transaction = new Transaction({
 
- hash:
- "0x" + Date.now().toString(16),
 
- candidate,
 
- nin,
 
- status:"Confirmed"
+// generate transaction hash
+
+const hash =
+"0x" +
+Math.random()
+.toString(16)
+.substring(2,12);
+
+
+
+
+
+
+// save transaction
+
+const transaction =
+new Transaction({
+
+nin,
+
+candidate,
+
+wallet,
+
+hash,
+
+signature,
+
+status:"Confirmed"
+
 
 });
+
+
 
 await transaction.save();
 
 
+
+
+
 res.json({
 
-message:"Vote saved ✅",
+message:
+"Vote submitted successfully",
 
 transaction
 
+
 });
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
-  }
+
+
+
+}
+
+catch(error){
+
+console.log(error);
+
+
+res.status(500).json({
+
+error:"Server error"
+
+});
+
+
+}
+
+
 });
 
 // 🔐 ADMIN LOGIN
@@ -240,7 +337,7 @@ app.post("/admin-login", (req, res) => {
     const token = jwt.sign(
       { role: "admin" },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "30d" }
     );
 
     return res.json({
@@ -381,23 +478,25 @@ app.get("/users", verifyAdmin, async (req, res) => {
   }
 });
 
-app.get("/transactions", async(req,res)=>{
+app.get("/transactions/:nin", async(req,res)=>{
 
 try{
 
 const transactions =
-await Transaction.find().sort({
-timestamp:-1
+await Transaction.find({
+nin:req.params.nin
 });
 
 
 res.json(transactions);
 
 
-}catch(error){
+}
+
+catch(error){
 
 res.status(500).json({
-error:"Server error"
+error:error.message
 });
 
 }
@@ -417,11 +516,86 @@ app.get("/results", async (req, res) => {
   res.json(result);
 });
 
-app.delete("/reset-votes", verifyAdmin, async (req, res) => {
-  await Vote.deleteMany({});
-  res.json({
-  message: "Votes cleared successfully",
+app.delete(
+"/reset-votes",
+verifyAdmin,
+async(req,res)=>{
+
+
+try{
+
+
+await Vote.deleteMany({});
+
+
+await Transaction.deleteMany({});
+
+
+
+await User.updateMany(
+{},
+{
+hasVoted:false
+}
+);
+
+
+
+res.json({
+
+message:
+"Election reset successfully"
+
 });
+
+
+}
+
+
+catch(error){
+
+
+res.status(500).json({
+
+error:"Reset failed"
+
+});
+
+
+}
+
+
+});
+
+app.get("/admin/transactions",
+verifyAdmin,
+async(req,res)=>{
+
+
+try{
+
+
+const transactions =
+await Transaction.find();
+
+
+res.json(transactions);
+
+
+
+}
+
+catch(error){
+
+res.status(500).json({
+
+error:error.message
+
+});
+
+}
+
+
 });
 
 // 🗑️ DELETE USER
