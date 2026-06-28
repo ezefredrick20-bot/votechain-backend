@@ -395,30 +395,31 @@ error:
 // =====================
 
 
-const alreadyVoted =
+if(user.hasVoted){
 
-await Vote.findOne({
+return res.status(400).json({
 
-nin
+error:"You already voted"
 
 });
 
+}
 
+
+
+const alreadyVoted =
+await Vote.findOne({nin});
 
 
 if(alreadyVoted){
 
-
 return res.status(400).json({
 
-error:
-"You have already voted"
+error:"You have already voted"
 
 });
 
-
 }
-
 
 
 
@@ -889,28 +890,22 @@ async(req,res)=>{
 try{
 
 
-// delete votes
-
 await Vote.deleteMany({});
 
-
-
-// delete blockchain transactions
 
 await Transaction.deleteMany({});
 
 
 
-
-// allow users vote again
-
 await User.updateMany(
 {},
 {
-hasVoted:false
+$set:{
+hasVoted:false,
+wallet:null
+}
 }
 );
-
 
 
 
@@ -928,23 +923,17 @@ message:
 catch(error){
 
 
-console.error(
-"Reset error:",
-error
-);
-
+console.error(error);
 
 
 res.status(500).json({
 
-error:
-"Reset failed"
+error:error.message
 
 });
 
 
 }
-
 
 
 });
