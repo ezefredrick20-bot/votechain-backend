@@ -766,14 +766,23 @@ app.get("/users", verifyAdmin, async (req, res) => {
     const users = await User.find();
 
     // Optional: mask sensitive info
-    const safeUsers = users.map((u) => ({
-      id: u._id,
-      firstName: u.firstName,
-      lastName: u.lastName,
-      phone: u.phone,
-      nin:u.nin,
-      dob: u.dob,
-    }));
+   const safeUsers = users.map((u)=>({
+
+id:u._id,
+
+firstName:u.firstName,
+
+lastName:u.lastName,
+
+phone:u.phone,
+
+nin:u.nin,
+
+dob:u.dob,
+
+hasVoted:u.hasVoted
+
+}));
 
     res.json(safeUsers);
 
@@ -876,6 +885,46 @@ error:"Server error"
 
 }
 
+
+});
+
+// =========================
+// SYSTEM STATISTICS
+// =========================
+
+app.get("/stats", async (req, res) => {
+
+  try {
+
+    const registeredVoters = await User.countDocuments();
+
+    const votesCast = await Vote.countDocuments();
+
+    const election = await ElectionStatus.findOne();
+
+    res.json({
+
+      registeredVoters,
+
+      votesCast,
+
+      electionOpen: election ? election.isOpen : false
+
+    });
+
+  }
+
+  catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+
+      error: "Server error"
+
+    });
+
+  }
 
 });
 
