@@ -396,11 +396,11 @@ error:
 // =====================
 
 
-if(user.hasVoted){
+if (user.hasVoted) {
 
-return res.status(400).json({
+return res.status(409).json({
 
-error:"You already voted"
+error:"You have already cast your vote."
 
 });
 
