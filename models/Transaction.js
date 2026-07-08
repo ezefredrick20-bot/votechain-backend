@@ -30,9 +30,14 @@ type:String
 },
 
 
-status:{
-type:String,
-default:"Confirmed"
+status: {
+type: String,
+enum: [
+"Pending",
+"Confirmed",
+"Failed"
+],
+default: "Pending"
 },
 
 

@@ -4,6 +4,7 @@ const Vote = require("./models/Vote");
 const ElectionStatus = require("./models/ElectionStatus");
 const Transaction = require("./models/Transaction");
 const express = require("express");
+const crypto = require("crypto");
 
 const app = express();
 
@@ -510,7 +511,6 @@ await user.save();
 
 
 const transaction =
-
 await Transaction.create({
 
 nin,
@@ -519,27 +519,17 @@ wallet,
 
 candidate,
 
-
 signature,
 
-
 hash:
-
 "0x" +
+crypto.randomBytes(32).toString("hex"),
 
-Date.now()
+status:"Confirmed",
 
-.toString(16),
-
-
-
-status:
-"Confirmed"
-
-
+timestamp:new Date()
 
 });
-
 
 
 
