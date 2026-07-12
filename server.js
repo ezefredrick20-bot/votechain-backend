@@ -5,6 +5,8 @@ const ElectionStatus = require("./models/ElectionStatus");
 const Transaction = require("./models/Transaction");
 const express = require("express");
 const crypto = require("crypto");
+const logger = require("./utils/logger");
+const displayDashboard = require("./utils/dashboard");
 
 const app = express();
 
@@ -19,6 +21,13 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use((req, res, next) => {
+
+logger.info("REQUEST", `${req.method} ${req.url}`);
+
+next();
+
+});
 
 const User = require("./models/User");
 
@@ -60,12 +69,25 @@ app.post("/register", async (req, res) => {
       dob,
     });
 
-    await newUser.save();
+  await newUser.save();
+await displayDashboard();
+
+logger.title("NEW USER REGISTERED");
+
+logger.info("Name", firstName + " " + lastName);
+
+logger.info("NIN", nin);
+
+logger.info("Phone", phone);
+
+logger.success("Registration Successful");
+
+logger.database("Users", newUser);
 
     res.json({ message: "User registered successfully ✅" });
 
   } catch (error) {
-    console.error(error);
+    logger.error(error.message);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -88,19 +110,32 @@ app.post("/login", async (req, res) => {
 
     const user = await User.findOne({ nin, phone });
 
+
     if (!user) {
       return res.status(400).json({
         error: "Invalid credentials",
       });
     }
 
+logger.title("USER LOGIN");
+
+logger.info("Name", user.firstName + " " + user.lastName);
+
+logger.info("NIN", user.nin);
+
+logger.info("Wallet", user.wallet || "Not Connected");
+
+logger.success("Authentication Successful");
+
+logger.database("User", user);
+    
     res.json({
       message: "Login successful ✅",
       user,
     });
 
   } catch (error) {
-    console.error(error);
+    logger.error(error.message);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -134,41 +169,43 @@ error:"NIN and wallet required"
 
 
 
-const user =
-await User.findOneAndUpdate(
-
-{nin},
-
-{
-wallet:wallet.toLowerCase()
-},
-
-{
-new:true
-}
-
+const user = await User.findOneAndUpdate(
+    { nin },
+    {
+        wallet: wallet.toLowerCase()
+    },
+    {
+        new: true
+    }
 );
 
+if (!user) {
 
-
-if(!user){
-
-return res.status(404).json({
-
-error:"User not found"
-
-});
+    return res.status(404).json({
+        error: "User not found"
+    });
 
 }
 
+await displayDashboard();
 
+
+
+logger.title("WALLET CONNECTED");
+
+logger.info("User", user.firstName + " " + user.lastName);
+
+logger.info("NIN", nin);
+
+logger.info("Wallet", user.wallet);
+
+logger.success("Wallet Connected Successfully");
+
+logger.database("Updated User", user);
 
 res.json({
-
-message:"Wallet saved successfully",
-
-wallet:user.wallet
-
+    message: "Wallet saved successfully",
+    wallet: user.wallet
 });
 
 
@@ -177,7 +214,7 @@ wallet:user.wallet
 
 catch(error){
 
-console.error(error);
+logger.error(error.message);
 
 
 res.status(500).json({
@@ -235,15 +272,22 @@ error:"User not found"
 
 user.wallet = null;
 
-
 await user.save();
 
+await displayDashboard();
 
+logger.title("WALLET DISCONNECTED");
+
+logger.info("User", user.firstName + " " + user.lastName);
+
+logger.info("NIN", nin);
+
+logger.success("Wallet Disconnected");
+
+logger.database("Updated User", user);
 
 res.json({
-
-message:"Wallet disconnected successfully"
-
+    message: "Wallet disconnected successfully"
 });
 
 
@@ -253,7 +297,7 @@ message:"Wallet disconnected successfully"
 catch(error){
 
 
-console.error(error);
+logger.error(error.message);
 
 
 res.status(500).json({
@@ -272,6 +316,7 @@ error:"Server error"
 
 app.post("/vote", async(req,res)=>{
 
+logger.title("NEW BLOCKCHAIN VOTE");
 
 try{
 
@@ -289,7 +334,9 @@ signature
 
 }=req.body;
 
-
+logger.info("Candidate", candidate);
+logger.info("NIN", nin);
+logger.info("Wallet", wallet);
 
 
 
@@ -329,7 +376,7 @@ error:
 const user =
 await User.findOne({nin});
 
-
+logger.success("User Verified");
 
 if(!user){
 
@@ -480,7 +527,9 @@ wallet
 });
 
 
+logger.success("Vote Saved");
 
+logger.database("Vote Document", vote);
 
 
 
@@ -493,9 +542,11 @@ wallet
 
 user.hasVoted = true;
 
-
 await user.save();
 
+logger.success("User Updated");
+
+logger.database("Updated User", user);
 
 
 
@@ -531,8 +582,15 @@ timestamp:new Date()
 
 });
 
+await displayDashboard();
 
+logger.success("Blockchain Transaction Created");
 
+logger.info("Transaction Hash", transaction.hash);
+
+logger.info("Status", transaction.status);
+
+logger.database("Transaction Document", transaction);
 
 
 
@@ -540,6 +598,8 @@ timestamp:new Date()
 // RESPONSE
 // =====================
 
+console.log("Vote Submitted Successfully");
+console.log("============================\n");
 
 res.json({
 
@@ -666,8 +726,7 @@ res.json(voters);
 
 }catch(error){
 
-console.error(error);
-
+logger.error(error.message);
 res.status(500).json({
 error:"Server error"
 });
@@ -695,6 +754,8 @@ status.isOpen = !status.isOpen;
 
 await status.save();
 
+await displayDashboard();
+
 res.json({
 
 status: status.isOpen,
@@ -707,7 +768,7 @@ message: status.isOpen
 
 }catch(error){
 
-console.error(error);
+logger.error(error.message);
 
 res.status(500).json({
 error:"Server error"
@@ -739,7 +800,7 @@ isOpen:status.isOpen
 
 }catch(error){
 
-console.error(error);
+logger.error(error.message);
 
 res.status(500).json({
 error:"Server error"
@@ -777,7 +838,7 @@ hasVoted:u.hasVoted
     res.json(safeUsers);
 
   } catch (error) {
-    console.error(error);
+  logger.error(error.message);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -819,6 +880,13 @@ app.get("/results", async (req, res) => {
   votes.forEach((v) => {
     result[v.candidate] = (result[v.candidate] || 0) + 1;
   });
+
+logger.title("RESULTS GENERATED");
+
+logger.database(
+    "Election Results",
+    result
+);
 
   res.json(result);
 });
@@ -863,7 +931,7 @@ wallet:user.wallet || null
 catch(error){
 
 
-console.error(error);
+logger.error(error.message);
 
 
 res.status(500).json({
@@ -892,6 +960,23 @@ app.get("/stats", async (req, res) => {
 
     const election = await ElectionStatus.findOne();
 
+logger.title("SYSTEM STATS");
+
+logger.info(
+    "Registered",
+    registeredVoters
+);
+
+logger.info(
+    "Votes",
+    votesCast
+);
+
+logger.info(
+    "Election",
+    election?.isOpen ? "OPEN" : "CLOSED"
+);
+
     res.json({
 
       registeredVoters,
@@ -906,7 +991,7 @@ app.get("/stats", async (req, res) => {
 
   catch (error) {
 
-    console.error(error);
+   logger.error(error.message);
 
     res.status(500).json({
 
@@ -946,7 +1031,7 @@ wallet:null
 }
 );
 
-
+await displayDashboard();
 
 res.json({
 
@@ -962,7 +1047,7 @@ message:
 catch(error){
 
 
-console.error(error);
+logger.error(error.message);
 
 
 res.status(500).json({
@@ -977,6 +1062,7 @@ error:error.message
 
 });
 
+
 app.get("/admin/transactions",
 verifyAdmin,
 async(req,res)=>{
@@ -988,6 +1074,17 @@ try{
 const transactions =
 await Transaction.find();
 
+logger.title("ADMIN VIEWED BLOCKCHAIN");
+
+logger.info(
+    "Transactions",
+    transactions.length
+);
+
+logger.database(
+    "All Transactions",
+    transactions
+);
 
 res.json(transactions);
 
@@ -1015,10 +1112,12 @@ app.delete("/users/:id", verifyAdmin, async (req, res) => {
 
     await User.findByIdAndDelete(id);
 
+    await displayDashboard();
+
     res.json({ message: "User deleted successfully ✅" });
 
   } catch (error) {
-    console.error(error);
+    logger.error(error.message);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -1026,6 +1125,28 @@ app.delete("/users/:id", verifyAdmin, async (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, async () => {
+
+    logger.title("VOTECHAIN BLOCKCHAIN SERVER");
+
+    logger.success("Server Started");
+
+    logger.info("Port", PORT);
+
+    logger.info("MongoDB", "Connected");
+
+    logger.info("Blockchain", "Ethereum Sepolia");
+
+    logger.info("Wallet", "MetaMask");
+
+    logger.line();
+
+    await displayDashboard();
+
+    setInterval(async () => {
+
+        await displayDashboard();
+
+    }, 10000);
+
 });
