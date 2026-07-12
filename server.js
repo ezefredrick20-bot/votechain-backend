@@ -69,19 +69,11 @@ app.post("/register", async (req, res) => {
       dob,
     });
 
-  await newUser.save();
-await displayDashboard();
+ await newUser.save();
 
-logger.title("NEW USER REGISTERED");
+logger.register(newUser);
 
-logger.info("Name", firstName + " " + lastName);
-
-logger.info("NIN", nin);
-
-logger.info("Phone", phone);
-
-logger.success("Registration Successful");
-
+await displayDashboard("NEW USER REGISTERED");
 logger.database("Users", newUser);
 
     res.json({ message: "User registered successfully ✅" });
@@ -117,17 +109,9 @@ app.post("/login", async (req, res) => {
       });
     }
 
-logger.title("USER LOGIN");
+logger.login(user);
 
-logger.info("Name", user.firstName + " " + user.lastName);
-
-logger.info("NIN", user.nin);
-
-logger.info("Wallet", user.wallet || "Not Connected");
-
-logger.success("Authentication Successful");
-
-logger.database("User", user);
+await displayDashboard("USER LOGIN");;
     
     res.json({
       message: "Login successful ✅",
@@ -187,21 +171,9 @@ if (!user) {
 
 }
 
-await displayDashboard();
+logger.wallet(user);
 
-
-
-logger.title("WALLET CONNECTED");
-
-logger.info("User", user.firstName + " " + user.lastName);
-
-logger.info("NIN", nin);
-
-logger.info("Wallet", user.wallet);
-
-logger.success("Wallet Connected Successfully");
-
-logger.database("Updated User", user);
+await displayDashboard("WALLET CONNECTED");
 
 res.json({
     message: "Wallet saved successfully",
@@ -274,18 +246,9 @@ user.wallet = null;
 
 await user.save();
 
-await displayDashboard();
+logger.warning("Wallet Disconnected");
 
-logger.title("WALLET DISCONNECTED");
-
-logger.info("User", user.firstName + " " + user.lastName);
-
-logger.info("NIN", nin);
-
-logger.success("Wallet Disconnected");
-
-logger.database("Updated User", user);
-
+await displayDashboard("WALLET DISCONNECTED");
 res.json({
     message: "Wallet disconnected successfully"
 });
@@ -527,13 +490,6 @@ wallet
 });
 
 
-logger.success("Vote Saved");
-
-logger.database("Vote Document", vote);
-
-
-
-
 
 // =====================
 // UPDATE USER
@@ -582,15 +538,13 @@ timestamp:new Date()
 
 });
 
-await displayDashboard();
+logger.vote(
+    user,
+    transaction,
+    candidate
+);
 
-logger.success("Blockchain Transaction Created");
-
-logger.info("Transaction Hash", transaction.hash);
-
-logger.info("Status", transaction.status);
-
-logger.database("Transaction Document", transaction);
+await displayDashboard("NEW BLOCKCHAIN VOTE");
 
 
 
@@ -754,7 +708,17 @@ status.isOpen = !status.isOpen;
 
 await status.save();
 
-await displayDashboard();
+logger.admin(
+    status.isOpen
+        ? "OPEN ELECTION"
+        : "CLOSE ELECTION"
+);
+
+await displayDashboard(
+    status.isOpen
+        ? "ELECTION OPENED"
+        : "ELECTION CLOSED"
+);
 
 res.json({
 
@@ -1021,7 +985,9 @@ wallet:null
 }
 );
 
-await displayDashboard();
+logger.admin("RESET ELECTION");
+
+await displayDashboard("RESET ELECTION");
 
 res.json({
 
@@ -1102,7 +1068,9 @@ app.delete("/users/:id", verifyAdmin, async (req, res) => {
 
     await User.findByIdAndDelete(id);
 
-    await displayDashboard();
+    logger.admin("DELETE USER");
+
+await displayDashboard("DELETE USER");
 
     res.json({ message: "User deleted successfully ✅" });
 
@@ -1133,10 +1101,5 @@ app.listen(PORT, async () => {
 
     await displayDashboard();
 
-    setInterval(async () => {
-
-        await displayDashboard();
-
-    }, 10000);
 
 });

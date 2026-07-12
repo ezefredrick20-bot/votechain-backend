@@ -5,7 +5,9 @@ const ElectionStatus = require("../models/ElectionStatus");
 
 const logger = require("./logger");
 
-async function displayDashboard() {
+async function displayDashboard(lastEvent = "") {
+
+    console.clear();
 
     const users = await User.countDocuments();
 
@@ -24,38 +26,46 @@ async function displayDashboard() {
             timestamp: -1
         });
 
-    console.log("\n");
+    const remaining = users - votes;
 
     logger.title("VOTECHAIN LIVE BLOCKCHAIN DASHBOARD");
 
-    logger.info("Server", "ONLINE");
+    logger.info("Server","ONLINE");
 
-    logger.info("MongoDB", "CONNECTED");
+    logger.info("MongoDB","CONNECTED");
 
-    logger.info("Blockchain", "Ethereum Sepolia");
+    logger.info("Blockchain","Ethereum Sepolia");
 
-    logger.info("Wallet Provider", "MetaMask");
-
-    logger.line();
-
-    logger.info("Registered Users", users);
-
-    logger.info("Wallet Connected", wallets);
-
-    logger.info("Votes Cast", votes);
-
-    logger.info("Transactions", transactions);
+    logger.info("Wallet Provider","MetaMask");
 
     logger.info(
         "Election",
-        election?.isOpen
-            ? "OPEN"
-            : "CLOSED"
+        election?.isOpen ? "OPEN" : "CLOSED"
     );
 
     logger.line();
 
-    if (lastTransaction) {
+    logger.info("Registered Users",users);
+
+    logger.info("Wallet Connected",wallets);
+
+    logger.info("Votes Cast",votes);
+
+    logger.info("Remaining Voters",remaining);
+
+    logger.info("Transactions",transactions);
+
+    logger.line();
+
+    if(lastEvent){
+
+        logger.info("Latest Event",lastEvent);
+
+        logger.line();
+
+    }
+
+    if(lastTransaction){
 
         logger.blockchain("LATEST BLOCK");
 
@@ -65,8 +75,8 @@ async function displayDashboard() {
         );
 
         logger.info(
-            "NIN",
-            lastTransaction.nin
+            "Wallet",
+            lastTransaction.wallet
         );
 
         logger.info(
@@ -86,9 +96,9 @@ async function displayDashboard() {
             ).toLocaleString()
         );
 
-    }
+        logger.line();
 
-    logger.line();
+    }
 
 }
 

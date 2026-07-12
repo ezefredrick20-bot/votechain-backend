@@ -4,13 +4,13 @@ const util = require("util");
 function line() {
     console.log(
         chalk.cyan(
-            "════════════════════════════════════════════════════════════════════════════"
+            "══════════════════════════════════════════════════════════════════════"
         )
     );
 }
 
 function title(text) {
-    console.log();
+    console.log("\n");
     line();
     console.log(chalk.bold.greenBright(`   ${text}`));
     line();
@@ -36,14 +36,6 @@ function error(message) {
     console.log(chalk.red("✖ " + message));
 }
 
-function activity(message) {
-    console.log(chalk.blueBright("➜ " + message));
-}
-
-function blockchain(message) {
-    console.log(chalk.hex("#f7931a")("⛓ " + message));
-}
-
 function database(collection, document) {
 
     console.log();
@@ -55,49 +47,123 @@ function database(collection, document) {
     );
 
     console.log(
-        chalk.magenta(
-            "────────────────────────────────────────────────────────────"
-        )
-    );
-
-    console.log(
-        util.inspect(
-            document,
-            {
-                colors: true,
-                depth: null,
-                compact: false
-            }
-        )
-    );
-
-    console.log(
-        chalk.magenta(
-            "────────────────────────────────────────────────────────────"
-        )
+        util.inspect(document, {
+            colors: true,
+            depth: null,
+            compact: false
+        })
     );
 
     console.log();
 }
 
-module.exports = {
 
-    title,
+/* ====================================================== */
+/*                 PROFESSIONAL EVENT LOGS                */
+/* ====================================================== */
 
-    info,
+function register(user){
 
-    success,
+title("NEW USER REGISTERED");
 
-    warning,
+info("Name",`${user.firstName} ${user.lastName}`);
 
-    error,
+info("NIN",user.nin);
 
-    activity,
+info("Phone",user.phone);
 
-    blockchain,
+success("Registration Successful");
 
-    database,
+database("Users",user);
 
-    line
+}
+
+
+function login(user){
+
+title("USER LOGIN");
+
+info("Name",`${user.firstName} ${user.lastName}`);
+
+info("NIN",user.nin);
+
+info("Wallet",user.wallet || "Not Connected");
+
+success("Authentication Successful");
+
+database("User",user);
+
+}
+
+
+function wallet(user){
+
+title("WALLET CONNECTED");
+
+info("User",`${user.firstName} ${user.lastName}`);
+
+info("Wallet",user.wallet);
+
+success("Wallet Connected Successfully");
+
+database("User",user);
+
+}
+
+
+function vote(user,transaction,candidate){
+
+title("NEW BLOCKCHAIN VOTE");
+
+info("Candidate",candidate);
+
+info("Voter",`${user.firstName} ${user.lastName}`);
+
+info("Wallet",user.wallet);
+
+info("Transaction",transaction.hash);
+
+success("Vote Successfully Recorded");
+
+database("Transaction",transaction);
+
+}
+
+
+function admin(action){
+
+title("ADMIN ACTION");
+
+info("Action",action);
+
+success("Completed");
+
+}
+
+module.exports={
+
+line,
+
+title,
+
+info,
+
+success,
+
+warning,
+
+error,
+
+database,
+
+register,
+
+login,
+
+wallet,
+
+vote,
+
+admin
 
 };
