@@ -1,6 +1,10 @@
 const chalk = require("chalk");
 const util = require("util");
 
+/* ====================================================== */
+/*                     BASIC HELPERS                       */
+/* ====================================================== */
+
 function line() {
     console.log(
         chalk.cyan(
@@ -20,7 +24,7 @@ function info(label, value) {
     console.log(
         chalk.cyan(label.padEnd(22, ".")) +
         " " +
-        chalk.white(value)
+        chalk.white(String(value))
     );
 }
 
@@ -35,6 +39,18 @@ function warning(message) {
 function error(message) {
     console.log(chalk.red("✖ " + message));
 }
+
+function activity(message) {
+    console.log(chalk.blueBright("➜ " + message));
+}
+
+function blockchain(message) {
+    console.log(chalk.hex("#f7931a")("⛓ " + message));
+}
+
+/* ====================================================== */
+/*                  DATABASE LOGGER                        */
+/* ====================================================== */
 
 function database(collection, document) {
 
@@ -55,115 +71,112 @@ function database(collection, document) {
     );
 
     console.log();
-}
 
+}
 
 /* ====================================================== */
-/*                 PROFESSIONAL EVENT LOGS                */
+/*              PROFESSIONAL EVENT LOGGERS                 */
 /* ====================================================== */
 
-function register(user){
+function register(user) {
 
-title("NEW USER REGISTERED");
+    title("NEW USER REGISTERED");
 
-info("Name",`${user.firstName} ${user.lastName}`);
+    info("Name", `${user.firstName} ${user.lastName}`);
+    info("NIN", user.nin);
+    info("Phone", user.phone);
 
-info("NIN",user.nin);
+    success("Registration Successful");
 
-info("Phone",user.phone);
-
-success("Registration Successful");
-
-database("Users",user);
+    database("Users", user);
 
 }
 
+function login(user) {
 
-function login(user){
+    title("USER LOGIN");
 
-title("USER LOGIN");
+    info("Name", `${user.firstName} ${user.lastName}`);
+    info("NIN", user.nin);
+    info("Wallet", user.wallet || "Not Connected");
 
-info("Name",`${user.firstName} ${user.lastName}`);
+    success("Authentication Successful");
 
-info("NIN",user.nin);
-
-info("Wallet",user.wallet || "Not Connected");
-
-success("Authentication Successful");
-
-database("User",user);
+    database("User", user);
 
 }
 
+function wallet(user) {
 
-function wallet(user){
+    title("WALLET CONNECTED");
 
-title("WALLET CONNECTED");
+    info("User", `${user.firstName} ${user.lastName}`);
+    info("Wallet", user.wallet);
 
-info("User",`${user.firstName} ${user.lastName}`);
+    success("Wallet Connected Successfully");
 
-info("Wallet",user.wallet);
-
-success("Wallet Connected Successfully");
-
-database("User",user);
+    database("User", user);
 
 }
 
+function vote(user, transaction, candidate) {
 
-function vote(user,transaction,candidate){
+    title("NEW BLOCKCHAIN VOTE");
 
-title("NEW BLOCKCHAIN VOTE");
+    info("Candidate", candidate);
+    info("Voter", `${user.firstName} ${user.lastName}`);
+    info("Wallet", user.wallet);
+    info("Hash", transaction.hash);
+    info("Status", transaction.status);
 
-info("Candidate",candidate);
+    success("Vote Successfully Recorded");
 
-info("Voter",`${user.firstName} ${user.lastName}`);
-
-info("Wallet",user.wallet);
-
-info("Transaction",transaction.hash);
-
-success("Vote Successfully Recorded");
-
-database("Transaction",transaction);
+    database("Transaction", transaction);
 
 }
 
+function admin(action) {
 
-function admin(action){
+    title("ADMIN ACTION");
 
-title("ADMIN ACTION");
+    info("Action", action);
 
-info("Action",action);
-
-success("Completed");
+    success("Completed");
 
 }
 
-module.exports={
+/* ====================================================== */
+/*                    EXPORTS                              */
+/* ====================================================== */
 
-line,
+module.exports = {
 
-title,
+    title,
 
-info,
+    info,
 
-success,
+    success,
 
-warning,
+    warning,
 
-error,
+    error,
 
-database,
+    activity,
 
-register,
+    blockchain,
 
-login,
+    database,
 
-wallet,
+    line,
 
-vote,
+    register,
 
-admin
+    login,
+
+    wallet,
+
+    vote,
+
+    admin
 
 };
