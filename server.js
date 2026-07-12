@@ -893,56 +893,46 @@ logger.database(
 
 // GET USER WALLET
 
-app.get("/user/:nin", async(req,res)=>{
+app.get("/user/:nin", async (req, res) => {
 
-try{
+    try {
 
+        const user = await User.findOne({
+            nin: req.params.nin
+        });
 
-const user = await User.findOne({
+        if (!user) {
 
-nin:req.params.nin
+            return res.status(404).json({
+                error: "User not found"
+            });
 
-});
+        }
 
+        res.json({
 
+            firstName: user.firstName,
+            lastName: user.lastName,
+            middleName: user.middleName,
+            phone: user.phone,
+            nin: user.nin,
+            dob: user.dob,
+            wallet: user.wallet,
+            hasVoted: user.hasVoted
 
-if(!user){
+        });
 
-return res.status(404).json({
+    }
 
-error:"User not found"
+    catch (error) {
 
-});
+        logger.error(error.message);
 
-}
+        res.status(500).json({
+            error: "Server error"
+        });
 
-
-
-res.json({
-
-wallet:user.wallet || null
-
-});
-
-
-}
-
-
-catch(error){
-
-
-logger.error(error.message);
-
-
-res.status(500).json({
-
-error:"Server error"
-
-});
-
-
-}
-
+    }
 
 });
 
