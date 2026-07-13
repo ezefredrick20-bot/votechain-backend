@@ -676,6 +676,17 @@ candidate:v.candidate
 
 }));
 
+logger.title("LIST OF VOTERS");
+
+logger.info("Total Votes", voters.length);
+
+logger.database(
+    "Votes Collection",
+    voters
+);
+
+await displayDashboard("VIEW VOTERS");
+
 res.json(voters);
 
 }catch(error){
@@ -742,69 +753,92 @@ error:"Server error"
 
 });
 
-app.get("/election-status", async(req,res)=>{
+app.get("/election-status", async (req, res) => {
 
-try{
+    try {
 
-let status = await ElectionStatus.findOne();
+        let status = await ElectionStatus.findOne();
 
-if(!status){
+        if (!status) {
 
-status = await ElectionStatus.create({
-isOpen:true
-});
+            status = await ElectionStatus.create({
+                isOpen: true
+            });
 
-}
+        }
 
-res.json({
+        logger.title("ELECTION STATUS");
 
-isOpen:status.isOpen
+        logger.info(
+            "Current Status",
+            status.isOpen ? "OPEN" : "CLOSED"
+        );
 
-});
+        await displayDashboard("ELECTION STATUS");
 
-}catch(error){
+        res.json({
 
-logger.error(error.message);
+            isOpen: status.isOpen
 
-res.status(500).json({
-error:"Server error"
-});
+        });
 
-}
+    }
+
+    catch (error) {
+
+        logger.error(error.message);
+
+        res.status(500).json({
+            error: "Server error"
+        });
+
+    }
 
 });
 
 
 // 👥 GET ALL REGISTERED USERS (ADMIN)
 app.get("/users", verifyAdmin, async (req, res) => {
-  try {
-    const users = await User.find();
 
-    // Optional: mask sensitive info
-   const safeUsers = users.map((u)=>({
+    try {
 
-id:u._id,
+        const users = await User.find();
 
-firstName:u.firstName,
+        const safeUsers = users.map((u) => ({
+            id: u._id,
+            firstName: u.firstName,
+            lastName: u.lastName,
+            phone: u.phone,
+            nin: u.nin,
+            dob: u.dob,
+            hasVoted: u.hasVoted
+        }));
 
-lastName:u.lastName,
+        logger.title("REGISTERED USERS");
 
-phone:u.phone,
+        logger.info("Total Users", safeUsers.length);
 
-nin:u.nin,
+        logger.database(
+            "Users Collection",
+            safeUsers
+        );
 
-dob:u.dob,
+        await displayDashboard("REGISTERED USERS");
 
-hasVoted:u.hasVoted
+        res.json(safeUsers);
 
-}));
+    }
 
-    res.json(safeUsers);
+    catch (error) {
 
-  } catch (error) {
-  logger.error(error.message);
-    res.status(500).json({ error: "Server error" });
-  }
+        logger.error(error.message);
+
+        res.status(500).json({
+            error: "Server error"
+        });
+
+    }
+
 });
 
 app.get("/transactions/:nin", async(req,res)=>{
@@ -819,6 +853,24 @@ nin:req.params.nin
 timestamp:-1
 });
 
+logger.title("USER TRANSACTIONS");
+
+logger.info(
+    "NIN",
+    req.params.nin
+);
+
+logger.info(
+    "Transactions",
+    transactions.length
+);
+
+logger.database(
+    "Blockchain Transactions",
+    transactions
+);
+
+await displayDashboard("USER TRANSACTIONS");
 
 res.json(transactions);
 
@@ -837,22 +889,43 @@ error:error.message
 
 // 📊 Results endpoint
 app.get("/results", async (req, res) => {
-  const votes = await Vote.find();
 
-  const result = {};
+    try {
 
-  votes.forEach((v) => {
-    result[v.candidate] = (result[v.candidate] || 0) + 1;
-  });
+        const votes = await Vote.find();
 
-logger.title("RESULTS GENERATED");
+        const result = {};
 
-logger.database(
-    "Election Results",
-    result
-);
+        votes.forEach((v) => {
 
-  res.json(result);
+            result[v.candidate] =
+                (result[v.candidate] || 0) + 1;
+
+        });
+
+        logger.title("RESULTS GENERATED");
+
+        logger.database(
+            "Election Results",
+            result
+        );
+
+        await displayDashboard("RESULTS GENERATED");
+
+        res.json(result);
+
+    }
+
+    catch (error) {
+
+        logger.error(error.message);
+
+        res.status(500).json({
+            error: "Server error"
+        });
+
+    }
+
 });
 
 // GET USER WALLET
@@ -872,6 +945,32 @@ app.get("/user/:nin", async (req, res) => {
             });
 
         }
+
+logger.title("PROFILE REQUEST");
+
+logger.info(
+    "User",
+    user.firstName + " " + user.lastName
+);
+
+logger.info(
+    "Wallet",
+    user.wallet || "Not Connected"
+);
+
+logger.info(
+    "Voting",
+    user.hasVoted
+        ? "Already Voted"
+        : "Not Yet Voted"
+);
+
+logger.database(
+    "User Profile",
+    user
+);
+
+await displayDashboard("USER PROFILE");
 
         res.json({
 
@@ -954,6 +1053,96 @@ logger.info(
     });
 
   }
+
+});
+
+app.get("/users-count", async (req, res) => {
+
+    try {
+
+        const count = await User.countDocuments();
+
+        logger.title("REGISTERED USERS");
+
+        logger.info("Total Registered Users", count);
+
+        await displayDashboard("REGISTERED USERS");
+
+        res.json({
+            count
+        });
+
+    }
+
+    catch (error) {
+
+        logger.error(error.message);
+
+        res.status(500).json({
+            error: "Server error"
+        });
+
+    }
+
+});
+
+app.get("/voters-count", async (req, res) => {
+
+    try {
+
+        const count = await Vote.countDocuments();
+
+        logger.title("TOTAL VOTES");
+
+        logger.info("Votes Cast", count);
+
+        await displayDashboard("TOTAL VOTES");
+
+        res.json({
+            count
+        });
+
+    }
+
+    catch (error) {
+
+        logger.error(error.message);
+
+        res.status(500).json({
+            error: "Server error"
+        });
+
+    }
+
+});
+
+app.get("/transactions-count", async (req, res) => {
+
+    try {
+
+        const count = await Transaction.countDocuments();
+
+        logger.title("BLOCKCHAIN TRANSACTIONS");
+
+        logger.info("Transactions", count);
+
+        await displayDashboard("BLOCKCHAIN TRANSACTIONS");
+
+        res.json({
+            count
+        });
+
+    }
+
+    catch (error) {
+
+        logger.error(error.message);
+
+        res.status(500).json({
+            error: "Server error"
+        });
+
+    }
 
 });
 
@@ -1041,6 +1230,8 @@ logger.database(
     "All Transactions",
     transactions
 );
+
+await displayDashboard("ADMIN VIEWED BLOCKCHAIN");
 
 res.json(transactions);
 
