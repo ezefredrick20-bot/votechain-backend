@@ -658,16 +658,7 @@ app.post("/admin-login", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-    res.json({
-        server: "ONLINE",
-        mongodb: "CONNECTED",
-        blockchain: "Ethereum Sepolia",
-        walletProvider: "MetaMask",
-        election: "CLOSED",
-        registeredUsers: registeredUsers,
-        votesCast: votesCast,
-        transactions: transactions
-    });
+  res.send("Backend is running ✅");
 });
 
 // 👥 GET ALL VOTERS (ADMIN)
