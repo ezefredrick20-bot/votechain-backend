@@ -601,43 +601,58 @@ error:
 // 🔐 ADMIN LOGIN
 const jwt = require("jsonwebtoken");
 const verifyAdmin = (req, res, next) => {
-  const authHeader = req.headers.authorization;
 
-  if (!authHeader) {
-   logger.warning("Unauthorized Access Attempt");
+    const authHeader = req.headers.authorization;
 
-logger.info(
-    "Route",
-    req.originalUrl
-);
+    if (!authHeader) {
 
-logger.info(
-    "IP",
-    req.ip
-);
-  }
+        logger.warning("Unauthorized Access Attempt");
 
-  const token = authHeader.split(" ")[1];
+        logger.info("Route", req.originalUrl);
 
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
+        logger.info("IP", req.ip);
 
-    if (decoded.role !== "admin") {
-      return res.status(403).json({
-        error: "Access denied",
-      });
+        return res.status(403).json({
+            error: "No token provided"
+        });
+
     }
 
-    next();
+    const token = authHeader.split(" ")[1];
 
-  } catch (error) {
-    return res.status(401).json({
-      error: "Invalid token",
-    });
-  }
+    try {
+
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET
+        );
+
+        if (decoded.role !== "admin") {
+
+            logger.warning("Invalid Admin Access");
+
+            logger.info("Route", req.originalUrl);
+
+            return res.status(403).json({
+                error: "Access denied"
+            });
+
+        }
+
+        next();
+
+    }
+
+    catch (error) {
+
+        logger.error(error.message);
+
+        return res.status(401).json({
+            error: "Invalid token"
+        });
+
+    }
+
 };
 
 // =========================
