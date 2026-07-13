@@ -29,6 +29,8 @@ next();
 
 });
 
+app.set("trust proxy", true);
+
 const User = require("./models/User");
 
 app.post("/register", async (req, res) => {
